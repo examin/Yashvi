@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LagrangeInterpolationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shamir-secret-sharing</a> &gt; <a href="index.source.html" class="el_package">com.catalog.secretsharing.service</a> &gt; <span class="el_source">LagrangeInterpolationService.java</span></div><h1>LagrangeInterpolationService.java</h1><pre class="source lang-java linenums">package com.catalog.secretsharing.service;
+
+import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.math.MathContext;
+import java.util.List;
+
+/**
+ * Service implementing Lagrange Interpolation for polynomial reconstruction
+ * 
+ * This service reconstructs polynomial coefficients from given points using
+ * Lagrange interpolation, specifically finding the constant term (secret).
+ */
+@Service
+<span class="fc" id="L18">@Slf4j</span>
+<span class="nc" id="L19">public class LagrangeInterpolationService {</span>
+    
+    /**
+     * Mathematical context for high precision calculations
+     */
+<span class="fc" id="L24">    private static final MathContext MATH_CONTEXT = new MathContext(50, RoundingMode.HALF_UP);</span>
+    
+    /**
+     * Represents a point in 2D space for interpolation
+     */
+    public static class Point {
+        private final BigDecimal x;
+        private final BigDecimal y;
+        
+<span class="nc" id="L33">        public Point(BigDecimal x, BigDecimal y) {</span>
+<span class="nc" id="L34">            this.x = x;</span>
+<span class="nc" id="L35">            this.y = y;</span>
+<span class="nc" id="L36">        }</span>
+        
+<span class="fc" id="L38">        public Point(int x, String y) {</span>
+<span class="fc" id="L39">            this.x = new BigDecimal(x);</span>
+<span class="fc" id="L40">            this.y = new BigDecimal(y);</span>
+<span class="fc" id="L41">        }</span>
+        
+<span class="nc" id="L43">        public Point(String x, String y) {</span>
+<span class="nc" id="L44">            this.x = new BigDecimal(x);</span>
+<span class="nc" id="L45">            this.y = new BigDecimal(y);</span>
+<span class="nc" id="L46">        }</span>
+        
+<span class="nc" id="L48">        public BigDecimal getX() { return x; }</span>
+<span class="nc" id="L49">        public BigDecimal getY() { return y; }</span>
+        
+        @Override
+        public String toString() {
+<span class="nc" id="L53">            return String.format(&quot;Point(x=%s, y=%s)&quot;, x.toString(), y.toString());</span>
+        }
+    }
+    
+    /**
+     * Calculates the constant term (f(0)) of a polynomial using Lagrange interpolation
+     * This represents the secret in Shamir's Secret Sharing scheme
+     * 
+     * @param points the points to interpolate through
+     * @return the constant term (secret) as BigDecimal
+     * @throws IllegalArgumentException if points are invalid
+     */
+    public BigDecimal calculateConstantTerm(List&lt;Point&gt; points) {
+<span class="nc" id="L66">        validatePoints(points);</span>
+        
+<span class="nc" id="L68">        log.debug(&quot;Starting Lagrange interpolation with {} points&quot;, points.size());</span>
+        
+        // The constant term is f(0), so we evaluate the Lagrange polynomial at x = 0
+<span class="nc" id="L71">        BigDecimal secret = BigDecimal.ZERO;</span>
+        
+<span class="nc bnc" id="L73" title="All 2 branches missed.">        for (int i = 0; i &lt; points.size(); i++) {</span>
+<span class="nc" id="L74">            Point currentPoint = points.get(i);</span>
+            
+            // Calculate the Lagrange basis polynomial Li(0)
+<span class="nc" id="L77">            BigDecimal basisValue = calculateLagrangeBasis(points, i, BigDecimal.ZERO);</span>
+            
+            // Add yi * Li(0) to the secret
+<span class="nc" id="L80">            BigDecimal contribution = currentPoint.getY().multiply(basisValue, MATH_CONTEXT);</span>
+<span class="nc" id="L81">            secret = secret.add(contribution, MATH_CONTEXT);</span>
+            
+<span class="nc" id="L83">            log.debug(&quot;Point {}: x={}, y={}, basis={}, contribution={}&quot;, </span>
+<span class="nc" id="L84">                    i, currentPoint.getX(), currentPoint.getY(), basisValue, contribution);</span>
+        }
+        
+<span class="nc" id="L87">        log.debug(&quot;Calculated secret (constant term): {}&quot;, secret);</span>
+<span class="nc" id="L88">        return secret;</span>
+    }
+    
+    /**
+     * Calculates the Lagrange basis polynomial Li(x) for the i-th point
+     * 
+     * @param points all interpolation points
+     * @param i the index of the current basis polynomial
+     * @param x the x value at which to evaluate the basis polynomial
+     * @return the value of Li(x)
+     */
+    private BigDecimal calculateLagrangeBasis(List&lt;Point&gt; points, int i, BigDecimal x) {
+<span class="nc" id="L100">        BigDecimal result = BigDecimal.ONE;</span>
+<span class="nc" id="L101">        Point currentPoint = points.get(i);</span>
+        
+<span class="nc bnc" id="L103" title="All 2 branches missed.">        for (int j = 0; j &lt; points.size(); j++) {</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">            if (i != j) {</span>
+<span class="nc" id="L105">                Point otherPoint = points.get(j);</span>
+                
+                // Calculate (x - xj) / (xi - xj)
+<span class="nc" id="L108">                BigDecimal numerator = x.subtract(otherPoint.getX(), MATH_CONTEXT);</span>
+<span class="nc" id="L109">                BigDecimal denominator = currentPoint.getX().subtract(otherPoint.getX(), MATH_CONTEXT);</span>
+                
+<span class="nc bnc" id="L111" title="All 2 branches missed.">                if (denominator.equals(BigDecimal.ZERO)) {</span>
+<span class="nc" id="L112">                    throw new IllegalArgumentException(</span>
+<span class="nc" id="L113">                        String.format(&quot;Duplicate x-coordinates found: x[%d] = x[%d] = %s&quot;, </span>
+<span class="nc" id="L114">                                    i, j, currentPoint.getX()));</span>
+                }
+                
+<span class="nc" id="L117">                BigDecimal fraction = numerator.divide(denominator, MATH_CONTEXT);</span>
+<span class="nc" id="L118">                result = result.multiply(fraction, MATH_CONTEXT);</span>
+            }
+        }
+        
+<span class="nc" id="L122">        return result;</span>
+    }
+    
+    /**
+     * Evaluates the interpolated polynomial at a given x value
+     * 
+     * @param points the interpolation points
+     * @param x the x value at which to evaluate
+     * @return the y value at the given x
+     */
+    public BigDecimal evaluatePolynomial(List&lt;Point&gt; points, BigDecimal x) {
+<span class="nc" id="L133">        validatePoints(points);</span>
+        
+<span class="nc" id="L135">        BigDecimal result = BigDecimal.ZERO;</span>
+        
+<span class="nc bnc" id="L137" title="All 2 branches missed.">        for (int i = 0; i &lt; points.size(); i++) {</span>
+<span class="nc" id="L138">            Point currentPoint = points.get(i);</span>
+<span class="nc" id="L139">            BigDecimal basisValue = calculateLagrangeBasis(points, i, x);</span>
+<span class="nc" id="L140">            BigDecimal contribution = currentPoint.getY().multiply(basisValue, MATH_CONTEXT);</span>
+<span class="nc" id="L141">            result = result.add(contribution, MATH_CONTEXT);</span>
+        }
+        
+<span class="nc" id="L144">        return result;</span>
+    }
+    
+    /**
+     * Validates the input points for interpolation
+     * 
+     * @param points the points to validate
+     * @throws IllegalArgumentException if validation fails
+     */
+    private void validatePoints(List&lt;Point&gt; points) {
+<span class="nc bnc" id="L154" title="All 4 branches missed.">        if (points == null || points.isEmpty()) {</span>
+<span class="nc" id="L155">            throw new IllegalArgumentException(&quot;Points list cannot be null or empty&quot;);</span>
+        }
+        
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        if (points.size() &lt; 2) {</span>
+<span class="nc" id="L159">            throw new IllegalArgumentException(&quot;At least 2 points are required for interpolation&quot;);</span>
+        }
+        
+        // Check for duplicate x-coordinates
+<span class="nc bnc" id="L163" title="All 2 branches missed.">        for (int i = 0; i &lt; points.size(); i++) {</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">            for (int j = i + 1; j &lt; points.size(); j++) {</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">                if (points.get(i).getX().equals(points.get(j).getX())) {</span>
+<span class="nc" id="L166">                    throw new IllegalArgumentException(</span>
+<span class="nc" id="L167">                        String.format(&quot;Duplicate x-coordinate found: %s at indices %d and %d&quot;, </span>
+<span class="nc" id="L168">                                    points.get(i).getX(), i, j));</span>
+                }
+            }
+        }
+        
+        // Check for null points
+<span class="nc bnc" id="L174" title="All 2 branches missed.">        for (int i = 0; i &lt; points.size(); i++) {</span>
+<span class="nc" id="L175">            Point point = points.get(i);</span>
+<span class="nc bnc" id="L176" title="All 6 branches missed.">            if (point == null || point.getX() == null || point.getY() == null) {</span>
+<span class="nc" id="L177">                throw new IllegalArgumentException(&quot;Point at index &quot; + i + &quot; is null or contains null values&quot;);</span>
+            }
+        }
+<span class="nc" id="L180">    }</span>
+    
+    /**
+     * Calculates all polynomial coefficients using Lagrange interpolation
+     * Note: This is computationally expensive and mainly for debugging/verification
+     * 
+     * @param points the interpolation points
+     * @return array of coefficients [a0, a1, a2, ...] where polynomial = a0 + a1*x + a2*x^2 + ...
+     */
+    public BigDecimal[] calculateAllCoefficients(List&lt;Point&gt; points) {
+<span class="nc" id="L190">        validatePoints(points);</span>
+        
+<span class="nc" id="L192">        int degree = points.size() - 1;</span>
+<span class="nc" id="L193">        BigDecimal[] coefficients = new BigDecimal[degree + 1];</span>
+        
+        // Initialize coefficients to zero
+<span class="nc bnc" id="L196" title="All 2 branches missed.">        for (int i = 0; i &lt;= degree; i++) {</span>
+<span class="nc" id="L197">            coefficients[i] = BigDecimal.ZERO;</span>
+        }
+        
+        // For each point, calculate its contribution to each coefficient
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        for (int i = 0; i &lt; points.size(); i++) {</span>
+<span class="nc" id="L202">            Point point = points.get(i);</span>
+<span class="nc" id="L203">            BigDecimal[] termCoefficients = calculateTermCoefficients(points, i);</span>
+            
+            // Add the contribution of this term to each coefficient
+<span class="nc bnc" id="L206" title="All 2 branches missed.">            for (int j = 0; j &lt;= degree; j++) {</span>
+<span class="nc" id="L207">                BigDecimal contribution = point.getY().multiply(termCoefficients[j], MATH_CONTEXT);</span>
+<span class="nc" id="L208">                coefficients[j] = coefficients[j].add(contribution, MATH_CONTEXT);</span>
+            }
+        }
+        
+<span class="nc" id="L212">        return coefficients;</span>
+    }
+    
+    /**
+     * Calculates the coefficients of the i-th Lagrange basis polynomial
+     * 
+     * @param points all interpolation points
+     * @param i the index of the basis polynomial
+     * @return coefficients of Li(x)
+     */
+    private BigDecimal[] calculateTermCoefficients(List&lt;Point&gt; points, int i) {
+<span class="nc" id="L223">        int degree = points.size() - 1;</span>
+<span class="nc" id="L224">        BigDecimal[] coeffs = new BigDecimal[degree + 1];</span>
+        
+        // Initialize with [1] (constant polynomial 1)
+<span class="nc" id="L227">        coeffs[0] = BigDecimal.ONE;</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">        for (int j = 1; j &lt;= degree; j++) {</span>
+<span class="nc" id="L229">            coeffs[j] = BigDecimal.ZERO;</span>
+        }
+        
+<span class="nc" id="L232">        Point currentPoint = points.get(i);</span>
+        
+        // For each other point, multiply by (x - xj) / (xi - xj)
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        for (int j = 0; j &lt; points.size(); j++) {</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">            if (i != j) {</span>
+<span class="nc" id="L237">                Point otherPoint = points.get(j);</span>
+<span class="nc" id="L238">                BigDecimal denominator = currentPoint.getX().subtract(otherPoint.getX(), MATH_CONTEXT);</span>
+                
+                // Multiply current polynomial by (x - xj)
+<span class="nc" id="L241">                BigDecimal[] newCoeffs = new BigDecimal[degree + 1];</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">                for (int k = 0; k &lt;= degree; k++) {</span>
+<span class="nc" id="L243">                    newCoeffs[k] = BigDecimal.ZERO;</span>
+                }
+                
+                // Multiply by x (shift coefficients)
+<span class="nc bnc" id="L247" title="All 2 branches missed.">                for (int k = 0; k &lt; degree; k++) {</span>
+<span class="nc" id="L248">                    newCoeffs[k + 1] = newCoeffs[k + 1].add(coeffs[k], MATH_CONTEXT);</span>
+                }
+                
+                // Multiply by -xj (subtract xj times each coefficient)
+<span class="nc" id="L252">                BigDecimal negXj = otherPoint.getX().negate();</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">                for (int k = 0; k &lt;= degree; k++) {</span>
+<span class="nc" id="L254">                    newCoeffs[k] = newCoeffs[k].add(coeffs[k].multiply(negXj, MATH_CONTEXT), MATH_CONTEXT);</span>
+                }
+                
+                // Divide by (xi - xj)
+<span class="nc bnc" id="L258" title="All 2 branches missed.">                for (int k = 0; k &lt;= degree; k++) {</span>
+<span class="nc" id="L259">                    newCoeffs[k] = newCoeffs[k].divide(denominator, MATH_CONTEXT);</span>
+                }
+                
+<span class="nc" id="L262">                coeffs = newCoeffs;</span>
+            }
+        }
+        
+<span class="nc" id="L266">        return coeffs;</span>
+    }
+    
+    /**
+     * Gets the mathematical context used for calculations
+     * 
+     * @return the math context
+     */
+    public MathContext getMathContext() {
+<span class="nc" id="L275">        return MATH_CONTEXT;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

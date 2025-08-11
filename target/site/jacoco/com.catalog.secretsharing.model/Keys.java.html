@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Keys.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shamir-secret-sharing</a> &gt; <a href="index.source.html" class="el_package">com.catalog.secretsharing.model</a> &gt; <span class="el_source">Keys.java</span></div><h1>Keys.java</h1><pre class="source lang-java linenums">package com.catalog.secretsharing.model;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
+/**
+ * Represents the keys section of the test case input containing n and k values
+ * 
+ * n: The number of roots provided in the given JSON
+ * k: The minimum number of roots required to solve for the coefficients of the polynomial
+ * k = m + 1, where m is the degree of the polynomial
+ */
+<span class="nc bnc" id="L19" title="All 22 branches missed.">@Data</span>
+<span class="nc" id="L20">@NoArgsConstructor</span>
+<span class="fc" id="L21">@AllArgsConstructor</span>
+@Schema(description = &quot;Keys containing polynomial parameters&quot;)
+public class Keys {
+    
+    /**
+     * The total number of polynomial roots provided
+     */
+    @JsonProperty(&quot;n&quot;)
+    @NotNull(message = &quot;n value is required&quot;)
+    @Min(value = 1, message = &quot;n must be at least 1&quot;)
+    @Schema(description = &quot;Total number of polynomial roots provided&quot;, example = &quot;4&quot;, minimum = &quot;1&quot;)
+<span class="fc" id="L32">    private Integer n;</span>
+    
+    /**
+     * The minimum number of roots required to solve for polynomial coefficients
+     * This is equal to degree + 1 of the polynomial
+     */
+    @JsonProperty(&quot;k&quot;)
+    @NotNull(message = &quot;k value is required&quot;)
+    @Min(value = 1, message = &quot;k must be at least 1&quot;)
+    @Schema(description = &quot;Minimum number of roots required (degree + 1)&quot;, example = &quot;3&quot;, minimum = &quot;1&quot;)
+<span class="fc" id="L42">    private Integer k;</span>
+    
+    /**
+     * Validates that k &lt;= n (can't require more points than available)
+     * 
+     * @return true if k &lt;= n, false otherwise
+     */
+    public boolean isValid() {
+<span class="pc bpc" id="L50" title="4 of 10 branches missed.">        return k != null &amp;&amp; n != null &amp;&amp; k &lt;= n &amp;&amp; k &gt; 0 &amp;&amp; n &gt; 0;</span>
+    }
+    
+    /**
+     * Gets the degree of the polynomial (k - 1)
+     * 
+     * @return the polynomial degree
+     */
+    public int getPolynomialDegree() {
+<span class="fc" id="L59">        return k - 1;</span>
+    }
+    
+    /**
+     * Gets the number of extra points available beyond minimum required
+     * 
+     * @return n - k (extra points available)
+     */
+    public int getExtraPoints() {
+<span class="nc" id="L68">        return n - k;</span>
+    }
+    
+    @Override
+    public String toString() {
+<span class="nc" id="L73">        return String.format(&quot;Keys{n=%d, k=%d, degree=%d}&quot;, n, k, getPolynomialDegree());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

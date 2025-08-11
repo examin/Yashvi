@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RootPoint.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shamir-secret-sharing</a> &gt; <a href="index.source.html" class="el_package">com.catalog.secretsharing.model</a> &gt; <span class="el_source">RootPoint.java</span></div><h1>RootPoint.java</h1><pre class="source lang-java linenums">package com.catalog.secretsharing.model;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+
+/**
+ * Represents a single root point with encoded y-value and base
+ * 
+ * Format Example:
+ * &quot;2&quot;: {
+ *     &quot;base&quot;: &quot;2&quot;,
+ *     &quot;value&quot;: &quot;111&quot;
+ * }
+ * 
+ * This represents the point (x=2, y=decoded_value) where:
+ * - x is the key (2 in this example)
+ * - y is decoded from &quot;111&quot; in base 2, which equals 7 in decimal
+ */
+<span class="pc bnc" id="L28" title="All 38 branches missed.">@Data</span>
+<span class="nc" id="L29">@NoArgsConstructor</span>
+<span class="nc" id="L30">@AllArgsConstructor</span>
+@Schema(description = &quot;Root point with base-encoded y-value&quot;)
+public class RootPoint {
+    
+    /**
+     * The base/radix for decoding the value (2-36)
+     */
+    @JsonProperty(&quot;base&quot;)
+    @NotBlank(message = &quot;Base is required&quot;)
+    @Pattern(regexp = &quot;^(?:[2-9]|[1-2][0-9]|3[0-6])$&quot;, 
+            message = &quot;Base must be between 2 and 36&quot;)
+    @Schema(description = &quot;Base/radix for value encoding (2-36)&quot;, example = &quot;10&quot;)
+<span class="fc" id="L42">    private String base;</span>
+    
+    /**
+     * The encoded y-value in the specified base
+     */
+    @JsonProperty(&quot;value&quot;)
+    @NotBlank(message = &quot;Value is required&quot;)
+    @Schema(description = &quot;Encoded y-value in the specified base&quot;, example = &quot;4&quot;)
+<span class="fc" id="L50">    private String value;</span>
+    
+    /**
+     * The x-coordinate (will be set from the JSON key)
+     */
+    @Schema(description = &quot;X-coordinate of the point&quot;, example = &quot;1&quot;)
+<span class="fc" id="L56">    private Integer x;</span>
+    
+    /**
+     * The decoded y-coordinate (calculated from value and base)
+     */
+    @Schema(description = &quot;Decoded y-coordinate&quot;, example = &quot;4&quot;)
+<span class="fc" id="L62">    private String decodedY;</span>
+    
+    /**
+     * Constructor with x coordinate
+     */
+<span class="fc" id="L67">    public RootPoint(Integer x, String base, String value) {</span>
+<span class="fc" id="L68">        this.x = x;</span>
+<span class="fc" id="L69">        this.base = base;</span>
+<span class="fc" id="L70">        this.value = value;</span>
+<span class="fc" id="L71">    }</span>
+    
+    /**
+     * Gets the base as an integer
+     * 
+     * @return base as integer
+     */
+    public int getBaseAsInt() {
+<span class="nc" id="L79">        return Integer.parseInt(base);</span>
+    }
+    
+    /**
+     * Validates that the value is valid for the given base
+     * 
+     * @return true if valid, false otherwise
+     */
+    public boolean isValidValueForBase() {
+        try {
+<span class="fc" id="L89">            int baseInt = Integer.parseInt(base);</span>
+<span class="pc bpc" id="L90" title="2 of 4 branches missed.">            if (baseInt &lt; 2 || baseInt &gt; 36) {</span>
+<span class="nc" id="L91">                return false;</span>
+            }
+            
+            // Check if all characters in value are valid for the base
+<span class="fc" id="L95">            String upperValue = value.toUpperCase();</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">            for (char c : upperValue.toCharArray()) {</span>
+                int digitValue;
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">                if (Character.isDigit(c)) {</span>
+<span class="fc" id="L99">                    digitValue = c - '0';</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">                } else if (Character.isLetter(c)) {</span>
+<span class="nc" id="L101">                    digitValue = c - 'A' + 10;</span>
+                } else {
+<span class="nc" id="L103">                    return false; // Invalid character</span>
+                }
+                
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">                if (digitValue &gt;= baseInt) {</span>
+<span class="nc" id="L107">                    return false; // Digit too large for base</span>
+                }
+            }
+<span class="fc" id="L110">            return true;</span>
+<span class="nc" id="L111">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L112">            return false;</span>
+        }
+    }
+    
+    /**
+     * Creates a string representation for debugging
+     */
+    @Override
+    public String toString() {
+<span class="nc" id="L121">        return String.format(&quot;RootPoint{x=%d, base=%s, value='%s', decodedY='%s'}&quot;, </span>
+                x, base, value, decodedY);
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

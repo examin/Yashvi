@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestCaseInput.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">shamir-secret-sharing</a> &gt; <a href="index.source.html" class="el_package">com.catalog.secretsharing.model</a> &gt; <span class="el_source">TestCaseInput.java</span></div><h1>TestCaseInput.java</h1><pre class="source lang-java linenums">package com.catalog.secretsharing.model;
+
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * Represents the complete test case input JSON structure
+ * 
+ * Example JSON:
+ * {
+ *   &quot;keys&quot;: {
+ *     &quot;n&quot;: 4,
+ *     &quot;k&quot;: 3
+ *   },
+ *   &quot;1&quot;: {
+ *     &quot;base&quot;: &quot;10&quot;,
+ *     &quot;value&quot;: &quot;4&quot;
+ *   },
+ *   &quot;2&quot;: {
+ *     &quot;base&quot;: &quot;2&quot;, 
+ *     &quot;value&quot;: &quot;111&quot;
+ *   }
+ *   // ... more root points
+ * }
+ */
+<span class="pc bnc" id="L38" title="All 22 branches missed.">@Data</span>
+<span class="fc" id="L39">@NoArgsConstructor</span>
+@Schema(description = &quot;Complete test case input with keys and root points&quot;)
+public class TestCaseInput {
+    
+    /**
+     * The keys section containing n and k values
+     */
+    @JsonProperty(&quot;keys&quot;)
+    @Valid
+    @NotNull(message = &quot;Keys section is required&quot;)
+    @Schema(description = &quot;Polynomial parameters (n and k values)&quot;)
+<span class="fc" id="L50">    private Keys keys;</span>
+    
+    /**
+     * Dynamic map to store root points with their x-coordinates as keys
+     * This handles the dynamic JSON structure where root points have numeric keys
+     */
+<span class="pc" id="L56">    @JsonIgnore</span>
+<span class="nc" id="L57">    private Map&lt;String, RootPoint&gt; rootPoints = new HashMap&lt;&gt;();</span>
+    
+    /**
+     * Constructor with keys
+     */
+<span class="nc" id="L62">    public TestCaseInput(Keys keys) {</span>
+<span class="nc" id="L63">        this.keys = keys;</span>
+<span class="nc" id="L64">        this.rootPoints = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L65">    }</span>
+    
+    /**
+     * Getter for Jackson to serialize the dynamic root points
+     * 
+     * @return map of root points
+     */
+    @JsonAnyGetter
+    public Map&lt;String, RootPoint&gt; getRootPointsMap() {
+<span class="nc" id="L74">        return rootPoints;</span>
+    }
+    
+    /**
+     * Setter for Jackson to deserialize dynamic root points
+     * Handles any JSON property that is not &quot;keys&quot;
+     * 
+     * @param key the x-coordinate as string
+     * @param value the root point data
+     */
+    @JsonAnySetter
+    public void setRootPoint(String key, RootPoint value) {
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        if (!&quot;keys&quot;.equals(key)) {</span>
+            try {
+                // Parse the key as x-coordinate
+<span class="nc" id="L89">                Integer x = Integer.parseInt(key);</span>
+<span class="nc" id="L90">                value.setX(x);</span>
+<span class="nc" id="L91">                rootPoints.put(key, value);</span>
+<span class="nc" id="L92">            } catch (NumberFormatException e) {</span>
+                // Ignore invalid keys
+<span class="nc" id="L94">                System.err.println(&quot;Invalid root point key: &quot; + key);</span>
+<span class="nc" id="L95">            }</span>
+        }
+<span class="nc" id="L97">    }</span>
+    
+    /**
+     * Gets all root points as a list, sorted by x-coordinate
+     * 
+     * @return sorted list of root points
+     */
+    public List&lt;RootPoint&gt; getRootPointsList() {
+<span class="fc" id="L105">        return rootPoints.entrySet().stream()</span>
+<span class="fc" id="L106">                .map(entry -&gt; {</span>
+<span class="fc" id="L107">                    RootPoint point = entry.getValue();</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">                    if (point.getX() == null) {</span>
+<span class="nc" id="L109">                        point.setX(Integer.parseInt(entry.getKey()));</span>
+                    }
+<span class="fc" id="L111">                    return point;</span>
+                })
+<span class="fc" id="L113">                .sorted((p1, p2) -&gt; Integer.compare(p1.getX(), p2.getX()))</span>
+<span class="fc" id="L114">                .toList();</span>
+    }
+    
+    /**
+     * Gets a specific root point by x-coordinate
+     * 
+     * @param x the x-coordinate
+     * @return the root point or null if not found
+     */
+    public RootPoint getRootPoint(int x) {
+<span class="nc" id="L124">        return rootPoints.get(String.valueOf(x));</span>
+    }
+    
+    /**
+     * Adds a root point
+     * 
+     * @param x the x-coordinate
+     * @param rootPoint the root point
+     */
+    public void addRootPoint(int x, RootPoint rootPoint) {
+<span class="fc" id="L134">        rootPoint.setX(x);</span>
+<span class="fc" id="L135">        rootPoints.put(String.valueOf(x), rootPoint);</span>
+<span class="fc" id="L136">    }</span>
+    
+    /**
+     * Validates the test case input
+     * 
+     * @return true if valid, false otherwise
+     */
+    public boolean isValid() {
+<span class="nc bnc" id="L144" title="All 4 branches missed.">        if (keys == null || !keys.isValid()) {</span>
+<span class="nc" id="L145">            return false;</span>
+        }
+        
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        if (rootPoints.size() != keys.getN()) {</span>
+<span class="nc" id="L149">            return false;</span>
+        }
+        
+        // Validate each root point
+<span class="nc bnc" id="L153" title="All 2 branches missed.">        for (RootPoint point : rootPoints.values()) {</span>
+<span class="nc bnc" id="L154" title="All 4 branches missed.">            if (point == null || !point.isValidValueForBase()) {</span>
+<span class="nc" id="L155">                return false;</span>
+            }
+<span class="nc" id="L157">        }</span>
+        
+<span class="nc" id="L159">        return true;</span>
+    }
+    
+    /**
+     * Gets the number of root points
+     * 
+     * @return number of root points
+     */
+    public int getRootPointCount() {
+<span class="nc" id="L168">        return rootPoints.size();</span>
+    }
+    
+    @Override
+    public String toString() {
+<span class="nc" id="L173">        return String.format(&quot;TestCaseInput{keys=%s, rootPointsCount=%d}&quot;, </span>
+<span class="nc" id="L174">                keys, rootPoints.size());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

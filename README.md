@@ -16,8 +16,8 @@ Follow these steps to clone, build, and run the project locally.
 ## 2. Clone the Repository
 
 ```bash
-git clone https://github.com//shamir-secret-sharing.git
-cd shamir-secret-sharing
+git clone https://github.com/examin/Yashvi.git
+cd Yashvi
 ```
 
 *(Replace `` with your GitHub username.)*

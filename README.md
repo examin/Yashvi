@@ -27,7 +27,7 @@ cd Yashvi
 ## 3. Review the Project Structure
 
 ```
-shamir-secret-sharing/
+Yashvi/
 ├── pom.xml
 ├── README.md
 ├── src/
